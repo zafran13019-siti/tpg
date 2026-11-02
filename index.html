@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKAKPT Pro - Rekap TPG dari PDF SKAKPT</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #10b981;
+  --primary-dark: #059669;
+  --primary-light: #34d399;
+  --secondary: #0ea5e9;
+  --accent: #f59e0b;
+  --danger: #ef4444;
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --gradient-1: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-2: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  --gradient-3: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gradient-4: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(16,185,129,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(14,165,233,0.06) 0%, transparent 50%);
+  z-index: -1;
+}
+
+.app-container { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: rgba(30,41,59,0.9);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--gradient-1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 15px rgba(16,185,129,0.4);
+}
+
+.logo-text h1 {
+  font-size: 20px;
+  font-weight: 800;
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.nav-section { padding: 16px 16px 8px; }
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+}
+
+.nav-item:hover { background: var(--bg-hover); color: var(--text); }
+
+.nav-item.active {
+  background: var(--gradient-1);
+  color: white;
+  box-shadow: 0 4px 15px rgba(16,185,129,0.3);
+}
+
+.nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+.nav-badge {
+  margin-left: auto;
+  background: rgba(255,255,255,0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Main */
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  padding: 32px;
+  max-width: calc(100vw - 260px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.page-title h2 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+.page-title p { color: var(--text-muted); font-size: 14px; }
+
+.header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary { background: var(--gradient-1); color: white; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16,185,129,0.4); }
+.btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--bg-hover); }
+.btn-success { background: var(--gradient-2); color: white; }
+.btn-warning { background: var(--gradient-3); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.stat-card:nth-child(1)::before { background: var(--gradient-1); }
+.stat-card:nth-child(2)::before { background: var(--gradient-2); }
+.stat-card:nth-child(3)::before { background: var(--gradient-3); }
+.stat-card:nth-child(4)::before { background: var(--gradient-4); }
+
+.stat-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.stat-card:nth-child(1) .stat-icon { background: rgba(16,185,129,0.15); }
+.stat-card:nth-child(2) .stat-icon { background: rgba(14,165,233,0.15); }
+.stat-card:nth-child(3) .stat-icon { background: rgba(245,158,11,0.15); }
+.stat-card:nth-child(4) .stat-icon { background: rgba(139,92,246,0.15); }
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+/* Card */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.card-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* Upload */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 16px;
+  padding: 60px 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: rgba(16,185,129,0.03);
+}
+
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--primary);
+  background: rgba(16,185,129,0.08);
+  transform: scale(1.01);
+}
+
+.upload-zone .upload-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.upload-zone h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.upload-zone p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+.upload-zone input { display: none; }
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--gradient-1);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* File list */
+.file-list { margin-top: 20px; max-height: 300px; overflow-y: auto; }
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(15,23,42,0.5);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.file-item:hover { background: var(--bg-hover); }
+
+.file-icon {
+  width: 40px; height: 40px;
+  background: rgba(16,185,129,0.15);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.file-info { flex: 1; min-width: 0; }
+.file-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.file-status {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.file-status.pending { background: rgba(245,158,11,0.15); color: var(--accent); }
+.file-status.done { background: rgba(16,185,129,0.15); color: var(--primary); }
+.file-status.error { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+.file-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.file-actions button {
+  width: 32px; height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  background: var(--bg-hover);
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.file-actions button:hover { background: var(--border); }
+.file-actions button.danger:hover { background: var(--danger); }
+
+/* Progress */
+.progress-container { margin: 20px 0; display: none; }
+
+.progress-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--gradient-1);
+  border-radius: 4px;
+  transition: width 0.3s;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-text { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+/* Table */
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-top: 16px;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+thead th {
+  background: var(--bg);
+  padding: 14px 12px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody tr { transition: background 0.2s; }
+tbody tr:hover { background: rgba(16,185,129,0.05); }
+tbody tr:nth-child(even) { background: rgba(15,23,42,0.3); }
+
+td[contenteditable="true"]:focus {
+  background: rgba(16,185,129,0.1);
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+tr.total-row {
+  background: rgba(16,185,129,0.1) !important;
+  font-weight: 700;
+}
+
+/* Pages */
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-width: 320px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s;
+  border-left: 4px solid var(--primary);
+}
+
+.toast.success { border-left-color: var(--primary); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--accent); }
+.toast.info { border-left-color: var(--secondary); }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-icon { font-size: 20px; }
+.toast-content { flex: 1; }
+.toast-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.toast-message { font-size: 12px; color: var(--text-muted); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  animation: modalIn 0.3s;
+}
+
+@keyframes modalIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 { font-size: 18px; font-weight: 700; }
+
+.modal-close {
+  width: 36px; height: 36px;
+  border: none;
+  background: var(--bg-hover);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.raw-text {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 500px;
+  overflow-y: auto;
+  color: var(--text-muted);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bg-hover); }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main-content { margin-left: 0; max-width: 100vw; padding: 16px; }
+  .stats-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">📋</div>
+        <div class="logo-text">
+          <h1>SKAKPT Pro</h1>
+          <p>REKAP TPG OTOMATIS</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Menu Utama</div>
+      <button class="nav-item active" onclick="switchPage('dashboard', this)">
+        <span class="icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="switchPage('upload', this)">
+        <span class="icon">📤</span> Upload SKAKPT
+        <span class="nav-badge" id="fileCount">0</span>
+      </button>
+      <button class="nav-item" onclick="switchPage('rekap', this)">
+        <span class="icon">📊</span> Rekap TPG
+      </button>
+      <button class="nav-item" onclick="switchPage('detail', this)">
+        <span class="icon">👥</span> Detail Pegawai
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Lainnya</div>
+      <button class="nav-item" onclick="switchPage('help', this)">
+        <span class="icon">❓</span> Bantuan
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div class="page-title">
+          <h2>Dashboard</h2>
+          <p>Ringkasan data Tunjangan Profesi Guru (TPG)</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" onclick="switchPage('upload', document.querySelectorAll('.nav-item')[1])">📤 Upload SKAKPT</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📄</div>
+          <div class="stat-value" id="statFiles">0</div>
+          <div class="stat-label">File SKAKPT</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="statGuru">0</div>
+          <div class="stat-label">Total Guru</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="statTotal">Rp 0</div>
+          <div class="stat-label">Total TPG Kotor</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✂️</div>
+          <div class="stat-value" id="statPph">Rp 0</div>
+          <div class="stat-label">Total PPH 21</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom: 16px;">🚀 Cara Penggunaan</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <div style="padding: 20px; background: rgba(16,185,129,0.08); border-radius: 12px; border: 1px solid rgba(16,185,129,0.2);">
+            <div style="font-size: 28px; margin-bottom: 8px;">1️⃣</div>
+            <div style="font-weight: 700; margin-bottom: 4px;">Upload PDF SKAKPT</div>
+            <div style="font-size: 13px; color: var(--text-muted);">Upload semua file PDF SKAKPT guru sekaligus</div>
+          </div>
+          <div style="padding: 20px; background: rgba(14,165,233,0.08); border-radius: 12px; border: 1px solid rgba(14,165,233,0.2);">
+            <div style="font-size: 28px; margin-bottom: 8px;">2️⃣</div>
+            <div style="font-weight: 700; margin-bottom: 4px;">Ekstrak Otomatis</div>
+            <div style="font-size: 13px; color: var(--text-muted);">Data nama, NIP, gaji, rekening diekstrak otomatis</div>
+          </div>
+          <div style="padding: 20px; background: rgba(245,158,11,0.08); border-radius: 12px; border: 1px solid rgba(245,158,11,0.2);">
+            <div style="font-size: 28px; margin-bottom: 8px;">3️⃣</div>
+            <div style="font-weight: 700; margin-bottom: 4px;">Export Excel TPG</div>
+            <div style="font-size: 13px; color: var(--text-muted);">Download rekap format TPG siap cetak</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div id="page-upload" class="page">
+      <div class="page-header">
+        <div class="page-title">
+          <h2>Upload File SKAKPT</h2>
+          <p>Upload PDF SKAKPT dari semua guru</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📁 Area Upload</div>
+            <div class="card-subtitle">Drag & drop atau klik untuk memilih file</div>
+          </div>
+          <span class="badge" style="background: rgba(16,185,129,0.15); color: var(--primary); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;" id="uploadBadge">0 file</span>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+          <span class="upload-icon">📄</span>
+          <h3>Drag & Drop File PDF SKAKPT di sini</h3>
+          <p>atau klik untuk memilih file dari komputer</p>
+          <div class="upload-btn">📂 Pilih File PDF</div>
+          <input type="file" id="fileInput" multiple accept=".pdf">
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+          </div>
+          <div class="progress-text">
+            <span id="progressLabel">Memproses...</span>
+            <span id="progressPercent">0%</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-primary" id="btnProcess" onclick="processAllFiles()" disabled>🚀 Proses Semua File</button>
+          <button class="btn btn-secondary" onclick="clearAllFiles()">🗑️ Hapus Semua</button>
+          <button class="btn btn-warning" onclick="loadSampleData()">📝 Muat Data Contoh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rekap -->
+    <div id="page-rekap" class="page">
+      <div class="page-header">
+        <div class="page-title">
+          <h2>Rekap TPG</h2>
+          <p>Daftar Permintaan Pembayaran TPG</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-success" onclick="exportToExcel()">📥 Export Excel TPG</button>
+          <button class="btn btn-secondary" onclick="exportToCSV()">📄 Export CSV</button>
+          <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copy</button>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="rekapCount">0</div>
+          <div class="stat-label">Total Guru</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💵</div>
+          <div class="stat-value" id="rekapKotor">Rp 0</div>
+          <div class="stat-label">Total Kotor</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✂️</div>
+          <div class="stat-value" id="rekapPph">Rp 0</div>
+          <div class="stat-label">Total PPH 21</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="rekapBersih">Rp 0</div>
+          <div class="stat-label">Total Bersih</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📊 Tabel Rekap TPG</div>
+            <div class="card-subtitle">Format sesuai Daftar Permintaan Pembayaran TPG</div>
+          </div>
+          <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" id="editModeToggle" onchange="toggleEditMode()"> ✏️ Mode Edit
+          </label>
+        </div>
+
+        <div class="table-container" id="tableContainer">
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <h3>Belum Ada Data</h3>
+            <p>Upload dan proses file PDF SKAKPT terlebih dahulu.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail -->
+    <div id="page-detail" class="page">
+      <div class="page-header">
+        <div class="page-title">
+          <h2>Detail Pegawai</h2>
+          <p>Data lengkap dari PDF SKAKPT</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-container" id="detailContainer">
+          <div class="empty-state">
+            <div class="icon">👥</div>
+            <h3>Belum Ada Data</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help -->
+    <div id="page-help" class="page">
+      <div class="page-header">
+        <div class="page-title">
+          <h2>Bantuan</h2>
+          <p>Panduan lengkap</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom: 16px;">📖 Cara Penggunaan</div>
+        <ol style="margin-left: 20px; line-height: 2.2; font-size: 14px;">
+          <li><strong>Upload PDF:</strong> Buka menu "Upload SKAKPT" dan drag & drop semua file PDF SKAKPT guru</li>
+          <li><strong>Proses File:</strong> Klik "🚀 Proses Semua File" untuk mengekstrak data</li>
+          <li><strong>Lihat Rekap:</strong> Buka menu "Rekap TPG" untuk melihat tabel format TPG</li>
+          <li><strong>Edit Manual:</strong> Aktifkan "Mode Edit" untuk koreksi data langsung di tabel</li>
+          <li><strong>Export:</strong> Klik "📥 Export Excel TPG" untuk download file Excel siap cetak</li>
+        </ol>
+
+        <div class="card-title" style="margin: 24px 0 16px;">📝 Data yang Diekstrak</div>
+        <div style="font-size: 14px; color: var(--text-muted); line-height: 1.8;">
+          Dari PDF SKAKPT, sistem akan mengekstrak:
+          <ul style="margin-left: 20px; margin-top: 8px;">
+            <li>✅ Nama Lengkap</li>
+            <li>✅ NIP (dari NRG/NUPTK/NPK - disesuaikan)</li>
+            <li>✅ Golongan / Ruang</li>
+            <li>✅ Gaji Pokok</li>
+            <li>✅ Gaji Pokok Setelah Pajak (= Jumlah Bersih)</li>
+            <li>✅ PPH 21 (dihitung otomatis = Gaji Pokok - Gaji Setelah Pajak)</li>
+            <li>✅ NPWP</li>
+            <li>✅ No. Rekening</li>
+            <li>✅ Nama Pada Rekening</li>
+            <li>✅ Nama Bank</li>
+            <li>✅ Mata Pelajaran Sertifikasi</li>
+            <li>✅ Lokasi Tugas</li>
+          </ul>
+        </div>
+
+        <div class="card-title" style="margin: 24px 0 16px;">🔒 Privasi & Keamanan</div>
+        <div style="font-size: 14px; color: var(--text-muted); line-height: 1.8;">
+          ✅ Semua proses berjalan 100% di browser Anda<br>
+          ✅ Tidak ada data yang dikirim ke server manapun<br>
+          ✅ Aman untuk data sensitif pegawai
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Modal</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let uploadedFiles = [];
+let extractedData = [];
+let editMode = false;
+
+// Kolom format TPG
+const tpgColumns = [
+  { key: 'no', label: 'No', type: 'number' },
+  { key: 'nama', label: 'Nama', type: 'text' },
+  { key: 'nip', label: 'NIP', type: 'text' },
+  { key: 'gol', label: 'GOL.', type: 'text' },
+  { key: 'gajiPokok', label: 'Gaji Pokok', type: 'currency' },
+  { key: 'jmlhBulan', label: 'Jmlh Bulan', type: 'number', default: 1 },
+  { key: 'jumlahKotor', label: 'Jumlah Kotor', type: 'currency' },
+  { key: 'pph21', label: 'POT. PPH 21', type: 'currency' },
+  { key: 'jumlahBersih', label: 'Jumlah Bersih', type: 'currency' },
+  { key: 'noRekening', label: 'No. Rekening', type: 'text' },
+  { key: 'namaRekening', label: 'Nama Pada Rekening', type: 'text' }
+];
+
+// Kolom detail lengkap
+const detailColumns = [
+  { key: 'nama', label: 'Nama' },
+  { key: 'nrg', label: 'NRG' },
+  { key: 'nuptk', label: 'NUPTK' },
+  { key: 'npk', label: 'NPK' },
+  { key: 'nip', label: 'NIP (Mapping)' },
+  { key: 'gol', label: 'Gol/Ruang' },
+  { key: 'status', label: 'Status' },
+  { key: 'gajiPokok', label: 'Gaji Pokok' },
+  { key: 'gajiSetelahPajak', label: 'Gaji Setelah Pajak' },
+  { key: 'pph21', label: 'PPH 21' },
+  { key: 'npwp', label: 'NPWP' },
+  { key: 'noRekening', label: 'No. Rekening' },
+  { key: 'namaRekening', label: 'Nama Rekening' },
+  { key: 'namaBank', label: 'Nama Bank' },
+  { key: 'mataPelajaran', label: 'Mata Pelajaran' },
+  { key: 'lokasiTugas', label: 'Lokasi Tugas' }
+];
+
+// ============ NAVIGATION ============
+function switchPage(pageName, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageName).classList.add('active');
+  
+  if (btn) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  
+  if (pageName === 'rekap') renderRekapTable();
+  if (pageName === 'detail') renderDetailTable();
+  if (pageName === 'dashboard') updateDashboard();
+}
+
+// ============ UPLOAD ============
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  let added = 0;
+  for (let f of files) {
+    if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) {
+      if (!uploadedFiles.find(x => x.name === f.name)) {
+        uploadedFiles.push({ file: f, name: f.name, status: 'pending', text: null, data: null });
+        added++;
+      }
+    }
+  }
+  if (added > 0) showToast('success', 'File Ditambahkan', `${added} file PDF SKAKPT ditambahkan`);
+  renderFileList();
+  updateFileCount();
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  if (uploadedFiles.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <div class="file-icon">📄</div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${(f.file.size/1024).toFixed(1)} KB • ${f.status === 'done' ? '✅ ' + (f.data?.nama || 'Terproses') : f.status === 'error' ? '❌ Error' : '⏳ Menunggu'}</div>
+      </div>
+      <span class="file-status ${f.status}">${f.status.toUpperCase()}</span>
+      <div class="file-actions">
+        ${f.text ? `<button onclick="viewRawText(${i})" title="Lihat Teks">👁️</button>` : ''}
+        <button class="danger" onclick="removeFile(${i})" title="Hapus">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  renderFileList();
+  updateFileCount();
+}
+
+function clearAllFiles() {
+  if (uploadedFiles.length === 0) return;
+  if (confirm('Hapus semua file?')) {
+    uploadedFiles = [];
+    extractedData = [];
+    renderFileList();
+    updateFileCount();
+    showToast('warning', 'Dihapus', 'Semua file dihapus');
+  }
+}
+
+function updateFileCount() {
+  document.getElementById('fileCount').textContent = uploadedFiles.length;
+  document.getElementById('uploadBadge').textContent = uploadedFiles.length + ' file';
+  document.getElementById('btnProcess').disabled = uploadedFiles.length === 0;
+}
+
+// ============ EKSTRAKSI PDF SKAKPT ============
+async function processAllFiles() {
+  if (uploadedFiles.length === 0) return;
+  
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const progressPercent = document.getElementById('progressPercent');
+  
+  progressContainer.style.display = 'block';
+  document.getElementById('btnProcess').disabled = true;
+  
+  extractedData = [];
+  let success = 0, error = 0;
+  
+  for (let i = 0; i < uploadedFiles.length; i++) {
+    const f = uploadedFiles[i];
+    try {
+      progressLabel.textContent = `Memproses: ${f.name}`;
+      
+      const arrayBuffer = await f.file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+      
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const items = content.items.map(item => item.str);
+        fullText += items.join(' ') + '\n';
+      }
+      
+      f.text = fullText;
+      const data = extractSKAKPT(fullText, f.name);
+      f.data = data;
+      f.status = 'done';
+      extractedData.push(data);
+      success++;
+      
+    } catch (err) {
+      f.status = 'error';
+      f.error = err.message;
+      error++;
+      console.error('Error:', f.name, err);
+    }
+    
+    const pct = Math.round(((i + 1) / uploadedFiles.length) * 100);
+    progressFill.style.width = pct + '%';
+    progressPercent.textContent = pct + '%';
+    renderFileList();
+  }
+  
+  progressLabel.textContent = `Selesai! ${success} berhasil, ${error} gagal`;
+  document.getElementById('btnProcess').disabled = false;
+  
+  if (success > 0) {
+    showToast('success', 'Proses Selesai', `${success} file berhasil, ${error} gagal`);
+  } else {
+    showToast('error', 'Proses Gagal', 'Tidak ada file yang berhasil diproses');
+  }
+  
+  updateDashboard();
+}
+
+function extractSKAKPT(text, filename) {
+  const data = {
+    nama: '', nrg: '', nuptk: '', npk: '', nip: '',
+    gol: '', status: '', gajiPokok: 0, gajiSetelahPajak: 0,
+    pph21: 0, npwp: '', noRekening: '', namaRekening: '',
+    namaBank: '', mataPelajaran: '', lokasiTugas: '',
+    sumberFile: filename
+  };
+  
+  // Helper: extract value after label
+  const extract = (patterns) => {
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) return match[1].trim();
+    }
+    return '';
+  };
+  
+  const extractNumber = (patterns) => {
+    const val = extract(patterns);
+    if (!val) return 0;
+    return parseFloat(val.replace(/[^\d]/g, '')) || 0;
+  };
+  
+  // Nama - cari "Nama" diikuti nilai
+  data.nama = extract([
+    /Nama\s*\n?\s*([A-Z][A-Z\s,\.]+)/,
+    /Nama\s*:\s*([A-Z][A-Z\s,\.]+)/
+  ]);
+  
+  // NRG
+  data.nrg = extract([/NRG\s*\n?\s*(\d{10,})/]);
+  
+  // NUPTK
+  data.nuptk = extract([/NUPTK\s*\n?\s*([-\d]+)/]);
+  if (data.nuptk === '-') data.nuptk = '';
+  
+  // NPK
+  data.npk = extract([/NPK\s*\n?\s*(\d{10,})/]);
+  
+  // NIP - mapping: gunakan NPK atau NRG sebagai NIP jika NIP 18 digit tidak ada
+  // Di SKAKPT biasanya tidak ada NIP 18 digit, jadi kita pakai NPK atau NRG
+  let nip18 = extract([/NIP\s*:\s*(\d{18})/, /NIP\s*\n?\s*(\d{18})/]);
+  if (nip18) {
+    data.nip = nip18;
+  } else if (data.npk) {
+    data.nip = data.npk; // fallback
+  } else if (data.nrg) {
+    data.nip = data.nrg;
+  }
+  
+  // Golongan
+  data.gol = extract([
+    /Gol\/ruang\s*\n?\s*([A-Z0-9]+)/i,
+    /Golongan\s*:\s*([A-Z0-9]+)/i
+  ]);
+  
+  // Status
+  data.status = extract([/Status\s*\n?\s*([A-Z][A-Z\s]+)/]);
+  
+  // Gaji Pokok
+  data.gajiPokok = extractNumber([
+    /Gaji pokok\s*\n?\s*Rp\s*([\d.,]+)/i,
+    /Gaji pokok\s*Rp\s*([\d.,]+)/i
+  ]);
+  
+  // Gaji setelah pajak
+  data.gajiSetelahPajak = extractNumber([
+    /Gaji pokok setelah pajak\s*\n?\s*Rp\s*([\d.,]+)/i,
+    /Gaji pokok setelah pajak\s*Rp\s*([\d.,]+)/i
+  ]);
+  
+  // PPH 21 = Gaji Pokok - Gaji Setelah Pajak
+  data.pph21 = data.gajiPokok - data.gajiSetelahPajak;
+  if (data.pph21 < 0) data.pph21 = 0;
+  
+  // NPWP
+  data.npwp = extract([/NPWP\s*\n?\s*(\d{15,})/]);
+  
+  // No Rekening (dari bagian REKENING)
+  data.noRekening = extract([/Nomor\s*\n?\s*(\d{10,})/]);
+  
+  // Nama Pada Rekening
+  data.namaRekening = extract([/Nama Pada Buku Tabungan[\s\S]*?\n\s*(.+)/]);
+  if (!data.namaRekening) {
+    data.namaRekening = extract([/Nama Pada Rekening\s*\n?\s*(.+)/]);
+  }
+  
+  // Nama Bank
+  data.namaBank = extract([/Nama Bank\s*\n?\s*(.+)/]);
+  
+  // Mata Pelajaran
+  data.mataPelajaran = extract([/Mata Pelajaran Sertifikasi\s*\n?\s*\[[\d\-]+\]\[[\d\-]+\]\s*(.+)/]);
+  if (!data.mataPelajaran) {
+    data.mataPelajaran = extract([/Mata Pelajaran\s*:\s*(.+)/]);
+  }
+  
+  // Lokasi Tugas
+  data.lokasiTugas = extract([/Lokasi tugas\s*\n?\s*(.+)/]);
+  
+  // Bersihkan nama rekening jika ada "Foto" atau teks aneh
+  if (data.namaRekening && (data.namaRekening.includes('Foto') || data.namaRekening.length > 50)) {
+    // Coba pattern lain
+    const match2 = text.match(/Nama Pada Buku Tabungan\/\s*Rekening\s*\n\s*(.+)/);
+    if (match2) data.namaRekening = match2[1].trim().split('\n')[0].trim();
+  }
+  
+  return data;
+}
+
+function viewRawText(i) {
+  const f = uploadedFiles[i];
+  showModal('Teks Mentah: ' + f.name, `<div class="raw-text">${f.text || 'Tidak ada teks'}</div>`, '<button class="btn btn-secondary" onclick="closeModal()">Tutup</button>');
+}
+
+// ============ SAMPLE DATA ============
+function loadSampleData() {
+  extractedData = [
+    { nama: 'H. Ismit, S.Pd.I, MM', nrg: '', nuptk: '', npk: '', nip: '196907052005011008', gol: 'IV/d', status: 'PNS', gajiPokok: 4576400, gajiSetelahPajak: 4347580, pph21: 228820, npwp: '', noRekening: '7126346497', namaRekening: 'ISMIT', namaBank: 'BSI', mataPelajaran: '', lokasiTugas: 'MTSN 3 HSU', sumberFile: 'sample' },
+    { nama: 'Sri Herniwati, S.Pd.I', nrg: '', nuptk: '', npk: '', nip: '197411252005012005', gol: 'IV/c', status: 'PNS', gajiPokok: 4870400, gajiSetelahPajak: 4139840, pph21: 730560, npwp: '', noRekening: '7119290796', namaRekening: 'SRI HERNIWATI', namaBank: 'BSI', mataPelajaran: '', lokasiTugas: 'MTSN 3 HSU', sumberFile: 'sample' },
+    { nama: 'Fitriah, S.Pd', nrg: '', nuptk: '', npk: '', nip: '197306092005012002', gol: 'IV/c', status: 'PNS', gajiPokok: 4870400, gajiSetelahPajak: 4139840, pph21: 730560, npwp: '', noRekening: '7119268243', namaRekening: 'FITRIAH, S.PD', namaBank: 'BSI', mataPelajaran: '', lokasiTugas: 'MTSN 3 HSU', sumberFile: 'sample' },
+    { nama: 'Rina Purnami, S.Pd', nrg: '', nuptk: '', npk: '', nip: '198102242005012005', gol: 'IV/c', status: 'PNS', gajiPokok: 4870400, gajiSetelahPajak: 4139840, pph21: 730560, npwp: '', noRekening: '7085859204', namaRekening: 'RINA PURNAMI, S.PD.', namaBank: 'BSI', mataPelajaran: '', lokasiTugas: 'MTSN 3 HSU', sumberFile: 'sample' },
+    { nama: 'Kartika Sari, S.Pd', nrg: '', nuptk: '', npk: '', nip: '197107292005012012', gol: 'IV/b', status: 'PNS', gajiPokok: 4672800, gajiSetelahPajak: 3971880, pph21: 700920, npwp: '', noRekening: '7119257578', namaRekening: 'KARTIKA SARI, S.PD', namaBank: 'BSI', mataPelajaran: '', lokasiTugas: 'MTSN 3 HSU', sumberFile: 'sample' },
+    { nama: 'Raudah Abshari, S.Pd', nrg: '252362140615', nuptk: '', npk: '2942280191076', nip: '2942280191076', gol: 'III/a', status: 'PNS Kemenag', gajiPokok: 2785700, gajiSetelahPajak: 2646415, pph21: 139285, npwp: '986452076735000', noRekening: '014701049349504', namaRekening: 'Raudah Abshari', namaBank: 'BANK BRI', mataPelajaran: "Qu'ran-Hadist", lokasiTugas: 'MTSN 3 HULU SUNGAI UTARA', sumberFile: '2026-10 - SKAKPT - RAUDAH ABSHARI.pdf' }
+  ];
+  updateDashboard();
+  showToast('success', 'Data Contoh Dimuat', '6 data contoh berhasil dimuat');
+  switchPage('rekap', document.querySelectorAll('.nav-item')[2]);
+}
+
+// ============ RENDER TABEL REKAP ============
+function renderRekapTable() {
+  const container = document.getElementById('tableContainer');
+  
+  if (extractedData.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><h3>Belum Ada Data</h3><p>Upload dan proses file PDF SKAKPT terlebih dahulu.</p></div>`;
+    updateRekapStats();
+    return;
+  }
+  
+  let html = '<table><thead><tr>';
+  tpgColumns.forEach(col => { html += `<th>${col.label}</th>`; });
+  html += '</tr></thead><tbody>';
+  
+  let totalKotor = 0, totalPph = 0, totalBersih = 0;
+  
+  extractedData.forEach((row, i) => {
+    const jumlahKotor = row.gajiPokok * (row.jmlhBulan || 1);
+    const pph = row.pph21 * (row.jmlhBulan || 1);
+    const bersih = jumlahKotor - pph;
+    
+    totalKotor += jumlahKotor;
+    totalPph += pph;
+    totalBersih += bersih;
+    
+    html += '<tr>';
+    tpgColumns.forEach(col => {
+      let val = '';
+      if (col.key === 'no') val = i + 1;
+      else if (col.key === 'nama') val = row.nama;
+      else if (col.key === 'nip') val = row.nip;
+      else if (col.key === 'gol') val = row.gol;
+      else if (col.key === 'gajiPokok') val = row.gajiPokok;
+      else if (col.key === 'jmlhBulan') val = row.jmlhBulan || 1;
+      else if (col.key === 'jumlahKotor') val = jumlahKotor;
+      else if (col.key === 'pph21') val = pph;
+      else if (col.key === 'jumlahBersih') val = bersih;
+      else if (col.key === 'noRekening') val = row.noRekening;
+      else if (col.key === 'namaRekening') val = row.namaRekening;
+      
+      const editable = editMode ? 'contenteditable="true"' : '';
+      const display = col.type === 'currency' ? (val ? 'Rp ' + Number(val).toLocaleString('id-ID') : '') : val;
+      html += `<td ${editable} data-row="${i}" data-col="${col.key}">${display}</td>`;
+    });
+    html += '</tr>';
+  });
+  
+  // Total row
+  html += '<tr class="total-row">';
+  tpgColumns.forEach(col => {
+    if (col.key === 'no') html += '<td></td>';
+    else if (col.key === 'nama') html += '<td>JUMLAH</td>';
+    else if (col.key === 'jumlahKotor') html += `<td>Rp ${totalKotor.toLocaleString('id-ID')}</td>`;
+    else if (col.key === 'pph21') html += `<td>Rp ${totalPph.toLocaleString('id-ID')}</td>`;
+    else if (col.key === 'jumlahBersih') html += `<td>Rp ${totalBersih.toLocaleString('id-ID')}</td>`;
+    else html += '<td></td>';
+  });
+  html += '</tr>';
+  
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  
+  if (editMode) {
+    container.querySelectorAll('td[contenteditable]').forEach(td => {
+      td.addEventListener('blur', (e) => {
+        const r = parseInt(e.target.dataset.row);
+        const c = e.target.dataset.col;
+        const val = e.target.textContent.replace(/[^\d]/g, '');
+        if (c === 'gajiPokok' || c === 'jmlhBulan') {
+          extractedData[r][c] = parseFloat(val) || 0;
+          renderRekapTable();
+        }
+      });
+    });
+  }
+  
+  updateRekapStats();
+}
+
+function updateRekapStats() {
+  document.getElementById('rekapCount').textContent = extractedData.length;
+  
+  let totalKotor = 0, totalPph = 0, totalBersih = 0;
+  extractedData.forEach(row => {
+    const jmlh = row.jmlhBulan || 1;
+    const kotor = row.gajiPokok * jmlh;
+    const pph = row.pph21 * jmlh;
+    totalKotor += kotor;
+    totalPph += pph;
+    totalBersih += (kotor - pph);
+  });
+  
+  document.getElementById('rekapKotor').textContent = 'Rp ' + totalKotor.toLocaleString('id-ID');
+  document.getElementById('rekapPph').textContent = 'Rp ' + totalPph.toLocaleString('id-ID');
+  document.getElementById('rekapBersih').textContent = 'Rp ' + totalBersih.toLocaleString('id-ID');
+}
+
+function toggleEditMode() {
+  editMode = document.getElementById('editModeToggle').checked;
+  renderRekapTable();
+  showToast('info', 'Mode Edit', editMode ? 'Aktif - Klik sel untuk mengedit' : 'Nonaktif');
+}
+
+// ============ DETAIL TABLE ============
+function renderDetailTable() {
+  const container = document.getElementById('detailContainer');
+  
+  if (extractedData.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">👥</div><h3>Belum Ada Data</h3></div>`;
+    return;
+  }
+  
+  let html = '<table><thead><tr>';
+  detailColumns.forEach(col => { html += `<th>${col.label}</th>`; });
+  html += '</tr></thead><tbody>';
+  
+  extractedData.forEach((row, i) => {
+    html += '<tr>';
+    detailColumns.forEach(col => {
+      let val = row[col.key] ?? '';
+      if (col.key === 'gajiPokok' || col.key === 'gajiSetelahPajak' || col.key === 'pph21') {
+        val = val ? 'Rp ' + Number(val).toLocaleString('id-ID') : '';
+      }
+      html += `<td>${val}</td>`;
+    });
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ============ DASHBOARD ============
+function updateDashboard() {
+  document.getElementById('statFiles').textContent = uploadedFiles.length;
+  document.getElementById('statGuru').textContent = extractedData.length;
+  
+  let totalKotor = 0, totalPph = 0;
+  extractedData.forEach(row => {
+    totalKotor += row.gajiPokok * (row.jmlhBulan || 1);
+    totalPph += row.pph21 * (row.jmlhBulan || 1);
+  });
+  
+  document.getElementById('statTotal').textContent = 'Rp ' + totalKotor.toLocaleString('id-ID');
+  document.getElementById('statPph').textContent = 'Rp ' + totalPph.toLocaleString('id-ID');
+}
+
+// ============ EXPORT EXCEL ============
+function exportToExcel() {
+  if (extractedData.length === 0) {
+    showToast('error', 'Tidak Ada Data', 'Tidak ada data untuk diexport');
+    return;
+  }
+  
+  const wb = XLSX.utils.book_new();
+  
+  // Sheet 1: Daftar TPG (format sesuai Excel TPG MTSN3HSU)
+  const headers = tpgColumns.map(c => c.label);
+  const wsData = [headers];
+  
+  let totalKotor = 0, totalPph = 0, totalBersih = 0;
+  
+  extractedData.forEach((row, i) => {
+    const jmlh = row.jmlhBulan || 1;
+    const kotor = row.gajiPokok * jmlh;
+    const pph = row.pph21 * jmlh;
+    const bersih = kotor - pph;
+    
+    totalKotor += kotor;
+    totalPph += pph;
+    totalBersih += bersih;
+    
+    wsData.push([
+      i + 1,
+      row.nama,
+      row.nip,
+      row.gol,
+      row.gajiPokok,
+      jmlh,
+      kotor,
+      pph,
+      bersih,
+      row.noRekening,
+      row.namaRekening
+    ]);
+  });
+  
+  // Row JUMLAH
+  wsData.push(['', 'JUMLAH', '', '', '', '', totalKotor, totalPph, totalBersih, '', '']);
+  
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [
+    {wch: 5}, {wch: 30}, {wch: 20}, {wch: 8}, {wch: 15},
+    {wch: 10}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 15}, {wch: 20}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Daftar TPG');
+  
+  // Sheet 2: Detail Pegawai
+  const detailHeaders = detailColumns.map(c => c.label);
+  const detailData = [detailHeaders];
+  extractedData.forEach(row => {
+    detailData.push(detailColumns.map(col => row[col.key] ?? ''));
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(detailData);
+  ws2['!cols'] = detailColumns.map(() => ({wch: 20}));
+  XLSX.utils.book_append_sheet(wb, ws2, 'Detail Pegawai');
+  
+  // Sheet 3: Info
+  const infoData = [
+    ['INFORMASI REKAP TPG'],
+    [''],
+    ['Total Guru', extractedData.length],
+    ['Total TPG Kotor', totalKotor],
+    ['Total PPH 21', totalPph],
+    ['Total TPG Bersih', totalBersih],
+    [''],
+    ['Tanggal Export', new Date().toLocaleString('id-ID')],
+    [''],
+    ['Catatan:'],
+    ['1. NIP di-mapping dari NPK/NRG jika NIP 18 digit tidak tersedia di SKAKPT'],
+    ['2. PPH 21 dihitung otomatis = Gaji Pokok - Gaji Setelah Pajak'],
+    ['3. Jumlah Kotor = Gaji Pokok × Jumlah Bulan'],
+    ['4. Jumlah Bersih = Jumlah Kotor - PPH 21']
+  ];
+  const ws3 = XLSX.utils.aoa_to_sheet(infoData);
+  XLSX.utils.book_append_sheet(wb, ws3, 'Info');
+  
+  XLSX.writeFile(wb, `Rekap_TPG_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('success', 'Export Berhasil', 'File Excel TPG berhasil diunduh');
+}
+
+function exportToCSV() {
+  if (extractedData.length === 0) {
+    showToast('error', 'Tidak Ada Data', 'Tidak ada data');
+    return;
+  }
+  
+  let csv = '\uFEFF';
+  csv += tpgColumns.map(c => `"${c.label}"`).join(',') + '\n';
+  
+  extractedData.forEach((row, i) => {
+    const jmlh = row.jmlhBulan || 1;
+    const kotor = row.gajiPokok * jmlh;
+    const pph = row.pph21 * jmlh;
+    const bersih = kotor - pph;
+    
+    const vals = [
+      i + 1, row.nama, row.nip, row.gol, row.gajiPokok,
+      jmlh, kotor, pph, bersih, row.noRekening, row.namaRekening
+    ];
+    csv += vals.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',') + '\n';
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Rekap_TPG_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('success', 'CSV Exported', 'File CSV berhasil diunduh');
+}
+
+function copyToClipboard() {
+  if (extractedData.length === 0) {
+    showToast('error', 'Tidak Ada Data', 'Tidak ada data');
+    return;
+  }
+  
+  let text = tpgColumns.map(c => c.label).join('\t') + '\n';
+  extractedData.forEach((row, i) => {
+    const jmlh = row.jmlhBulan || 1;
+    const kotor = row.gajiPokok * jmlh;
+    const pph = row.pph21 * jmlh;
+    const bersih = kotor - pph;
+    
+    const vals = [i+1, row.nama, row.nip, row.gol, row.gajiPokok, jmlh, kotor, pph, bersih, row.noRekening, row.namaRekening];
+    text += vals.join('\t') + '\n';
+  });
+  
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('success', 'Disalin!', 'Data berhasil disalin ke clipboard');
+  }).catch(() => {
+    showToast('error', 'Gagal', 'Gagal menyalin');
+  });
+}
+
+// ============ TOAST ============
+function showToast(type, title, message) {
+  const container = document.getElementById('toastContainer');
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span class="toast-icon">${icons[type]}</span>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+  `;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ============ MODAL ============
+function showModal(title, body, footer) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFooter').innerHTML = footer || '';
+  document.getElementById('modalOverlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// Init
+updateDashboard();
+showToast('info', 'Selamat Datang! 👋', 'SKAKPT Pro siap membantu rekap TPG Anda');
+</script>
+</body>
+</html>
